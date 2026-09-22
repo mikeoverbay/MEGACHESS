@@ -704,20 +704,24 @@ void setup() {
     umax_hook = umax_tick;
 
     theme_apply(settings.theme);
-    ui_begin();
-    ui_splash(F("MEGACHESS"), F("starting..."));
+    ui_begin();                      // panel stays dark until the first screen is ready
 
+    // The logo first, before anything else touches the card: it is written
+    // into the panel's memory while the display is off and shown whole.
     sd_begin();
+    const bool logo = sd_splash();
+    const uint32_t shown = millis();
+    if (logo) ui_display_on();
+
     sd_load_settings();
     ui_apply_calibration();          // settings may carry a saved calibration
     theme_apply(settings.theme);
     if (sd_present()) sd_pieces_load(cur.name);
 
-    // Boot splash off the card, if there is one: up for 3 s or until a tap.
-    if (sd_splash()) {
-        const uint32_t until = millis() + 3000;
+    // The logo stays up 3 s from the moment it appeared, or until a tap.
+    if (logo) {
         int tx, ty;
-        while ((int32_t) (millis() - until) < 0) {
+        while ((int32_t) (millis() - (shown + 3000)) < 0) {
             if (tft.getTouch(tx, ty)) break;
         }
     }
@@ -736,6 +740,7 @@ void setup() {
 
     screen = SCR_MENU;
     ui_draw_menu();
+    if (!logo) ui_display_on();      // no card: the menu is the first thing seen
 }
 
 void loop() {

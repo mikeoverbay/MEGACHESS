@@ -468,11 +468,6 @@ void ui_draw_over(const __FlashStringHelper* who, uint16_t colour) {
     text_mid_P(PANEL_X, PANEL_W, P_CARD_Y + 64, 2, cur.textDim, F("NEW or MENU"));
 }
 
-void ui_splash(const __FlashStringHelper* line1, const __FlashStringHelper* line2) {
-    tft.fillScreen(cur.panelBg);
-    text_mid_P(0, SCR_W, 130, 3, cur.accent, line1);
-    if (line2) text_mid_P(0, SCR_W, 172, 1, cur.textDim, line2);
-}
 
 // ---------------------------------------------------------------------------
 // hit testing
@@ -695,5 +690,12 @@ void ui_begin() {
     // Rotation 1 and 3 are both 480x320 landscape, 180 degrees apart.
     tft.setRotation(3);
     ui_apply_calibration();
-    tft.fillScreen(cur.panelBg);
+    // Display OFF (MIPI DCS 0x28): the panel shows nothing while the first
+    // screen - the logo, or the menu without a card - is written into its
+    // memory. ui_display_on() then shows it whole: no clear, no flash.
+    tft.writeRegister(0x28, NULL, 0);
+}
+
+void ui_display_on() {
+    tft.writeRegister(0x29, NULL, 0);      // Display ON
 }
