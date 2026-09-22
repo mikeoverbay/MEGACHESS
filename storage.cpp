@@ -8,16 +8,22 @@
  *
  * Card layout:
  *   /PIECES/<THEME>.SET        piece artwork, see build_assets.py for the format
- *   /MEGACHESS/SETTINGS.DAT    persisted Settings struct
- *   /MEGACHESS/SAVE.DAT        the in-progress game: raw board + game structs
- *   /MEGACHESS/GAMES.PGN       every finished game, appended
- *   /MEGACHESS/BOOK.TXT        opening lines, one per line, long algebraic
+ *   /MCHESS/SETTINGS.DAT    persisted Settings struct
+ *   /MCHESS/SAVE.DAT        the in-progress game: raw board + game structs
+ *   /MCHESS/GAMES.PGN       every finished game, appended
+ *   /MCHESS/BOOK.TXT        opening lines, one per line, long algebraic
+ *   /IMAGES/SPLASH.IMG       boot picture, made by tools/splash.py
  */
 #include <SD.h>
 #include "megachess.h"
 
 #define SD_CS      10
-#define DIR_MC     "/MEGACHESS"
+// 8.3 names only: the SD library cannot open a folder called MEGACHESS,
+// for reading or writing, and says nothing about why. Keep every name here
+// to eight characters, a dot, three.
+#define DIR_MC     "/MCHESS"
+#define DIR_IMG    "/IMAGES"                // yours: pictures
+#define F_SPLASH   DIR_IMG "/SPLASH.IMG"
 #define F_SETTINGS DIR_MC "/SETTINGS.DAT"
 #define F_SAVE     DIR_MC "/SAVE.DAT"
 #define F_PGN      DIR_MC "/GAMES.PGN"
@@ -134,12 +140,12 @@ bool sd_pieces_blit(uint8_t typeIdx, bool white, int16_t x, int16_t y,
 // ---------------------------------------------------------------------------
 // boot splash
 // ---------------------------------------------------------------------------
-// /MEGACHESS/SPLASH.IMG - a 480x320 RGB565 image, raw or run-length encoded,
+// /IMAGES/SPLASH.IMG - a 480x320 RGB565 image, raw or run-length encoded,
 // written by tools/splash.py. Painted at boot if present; if absent the text
 // splash stays up until the menu. Reuses the piece blit buffers.
 bool sd_splash() {
     if (!sdOK) return false;
-    File f = SD.open("/MEGACHESS/SPLASH.IMG", FILE_READ);
+    File f = SD.open(F_SPLASH, FILE_READ);
     if (!f) return false;
 
     uint8_t hdr[16];
@@ -247,7 +253,7 @@ bool sd_save_game() {
 
     SD.remove(F_SAVE);
     File f = SD.open(F_SAVE, FILE_WRITE);
-    if (!f) return false;
+    if (!f) { Serial.println(F("save: SAVE.DAT would not open")); return false; }
     f.write((const uint8_t*) &h, sizeof(h));
     f.write((const uint8_t*) &board, sizeof(board_t));
     f.write((const uint8_t*) &game, sizeof(game_t));
@@ -257,18 +263,27 @@ bool sd_save_game() {
 }
 
 bool sd_load_game() {
-    if (!sdOK) return false;
+    if (!sdOK) { Serial.println(F("resume: no card")); return false; }
     File f = SD.open(F_SAVE, FILE_READ);
-    if (!f) return false;
+    if (!f) { Serial.println(F("resume: SAVE.DAT would not open")); return false; }
 
     SaveHdr h;
-    bool ok = (f.read((uint8_t*) &h, sizeof(h)) == (int) sizeof(h))
+    const int got = f.read((uint8_t*) &h, sizeof(h));
+    bool ok = (got == (int) sizeof(h))
               && h.magic == SAVE_MAGIC
               && h.boardSz == sizeof(board_t)      // guards a struct change
               && h.gameSz == sizeof(game_t)        // after a recompile
               && h.histCount <= HIST_MAX;
+    if (!ok) {                                     // say which check failed
+        Serial.print(F("resume: header ")); Serial.print(got); Serial.print('/'); Serial.print((int) sizeof(h));
+        Serial.print(F(" magic ")); Serial.print(h.magic == SAVE_MAGIC ? F("ok") : F("BAD"));
+        Serial.print(F(" board ")); Serial.print(h.boardSz); Serial.print('/'); Serial.print((int) sizeof(board_t));
+        Serial.print(F(" game ")); Serial.print(h.gameSz); Serial.print('/'); Serial.print((int) sizeof(game_t));
+        Serial.print(F(" hist ")); Serial.println(h.histCount);
+    }
     if (ok) ok = (f.read((uint8_t*) &board, sizeof(board_t)) == (int) sizeof(board_t));
     if (ok) ok = (f.read((uint8_t*) &game, sizeof(game_t)) == (int) sizeof(game_t));
+    if (!ok) Serial.println(F("resume: read failed"));
     if (ok) {
         histCount = h.histCount;
         if (histCount)

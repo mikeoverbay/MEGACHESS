@@ -83,11 +83,19 @@ FAT32, MBR — which is what yours already is. Written for you:
 /PIECES/CLASSIC.SET
 /PIECES/POCKET.SET
 /PIECES/SLATE.SET
-/MEGACHESS/BOOK.TXT      opening lines, editable
-/MEGACHESS/SAVE.DAT      written as you play, removed when a game ends
-/MEGACHESS/SETTINGS.DAT  mode, depth, theme, orientation
-/MEGACHESS/GAMES.PGN     every finished game, appended
+/PIECES/VECTOR.SET
+/MCHESS/BOOK.TXT         opening lines, editable
+/MCHESS/SAVE.DAT         written as you play, removed when a game ends
+/MCHESS/SETTINGS.DAT     mode, skill, theme, orientation, touch calibration
+/MCHESS/GAMES.PGN        every finished game, appended
+/IMAGES/SPLASH.IMG       boot picture, optional, made by tools/splash.py
 ```
+
+`SD_DATA/` in the repo is this card, file for file; copy it over. MCHESS is
+the firmware's own folder and it creates it; IMAGES is yours. Every name
+is 8.3 on purpose: the Arduino SD library cannot open anything longer, folders
+included, and it fails without a word. The folder was MEGACHESS once, and the
+Mega never read or wrote a byte in it. The simulator refuses such names too.
 
 ---
 
@@ -160,7 +168,7 @@ renders PNG mockups at the real 480x320 to check a theme without flashing.
 
 ## The opening book
 
-`/MEGACHESS/BOOK.TXT` — one opening per line, long algebraic, `#` for comments:
+`/MCHESS/BOOK.TXT` — one opening per line, long algebraic, `#` for comments:
 
 ```
 e2e4 e7e5 g1f3 b8c6 f1c4 g8f6 d2d3 f8c5 c2c3 d7d6
@@ -182,7 +190,7 @@ side (`options.openbook` is left off).
 
 ## PGN log
 
-Finished games append to `/MEGACHESS/GAMES.PGN`. Moves are written in **long
+Finished games append to `/MCHESS/GAMES.PGN`. Moves are written in **long
 algebraic** (`e2e4`, `Nb1c3`, `Bf1xc4`), not strict SAN — it needs no
 disambiguation pass, and lichess, SCID and ChessBase all import it. If you want
 strict SAN, the place to add it is `lan()` in [storage.cpp](storage.cpp).

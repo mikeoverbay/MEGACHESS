@@ -85,7 +85,7 @@ void theme_apply(uint8_t idx);
 enum AppMode   : uint8_t { MODE_HUMAN_AI = 0, MODE_HOTSEAT = 1, MODE_AI_AI = 2 };
 enum AppScreen : uint8_t { SCR_MENU = 0, SCR_GAME = 1, SCR_OVER = 2 };
 
-// Persisted to SD as /MEGACHESS/SETTINGS.DAT.
+// Persisted to SD as /MCHESS/SETTINGS.DAT.
 struct Settings {
     uint32_t magic;
     uint8_t  mode;        // AppMode
@@ -145,6 +145,7 @@ void ui_draw_touch_readout();
 extern int16_t tap_x, tap_y;     // last tap, -1 until one happens
 void ui_splash(const __FlashStringHelper* line1, const __FlashStringHelper* line2);
 void ui_toast(const __FlashStringHelper* msg, uint16_t colour, uint16_t ms);
+void ui_menu_note(const __FlashStringHelper* msg, uint16_t colour);   // menu footer line
 
 index_t ui_hit_square(int16_t x, int16_t y);
 int8_t  ui_hit_button(int16_t x, int16_t y);
@@ -186,7 +187,7 @@ void sd_hist_pop();
 
 // Piece artwork. Falls back to the 1-bit flash masks when no set is loaded.
 bool sd_pieces_load(const char* name);     // "AMBER" -> /PIECES/AMBER.SET
-bool sd_splash();                          // paint /MEGACHESS/SPLASH.IMG if present
+bool sd_splash();                          // paint /IMAGES/SPLASH.IMG if present
 bool sd_pieces_ready();
 // Blit one piece onto a square already filled with squareColour.
 bool sd_pieces_blit(uint8_t typeIdx, bool white, int16_t x, int16_t y,

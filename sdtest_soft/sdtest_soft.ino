@@ -174,21 +174,21 @@ static void runTest() {
     checkSet("/PIECES/CLASSIC.SET");
 
     Serial.print(F("--- write test --- "));
-    sd.remove("/MEGACHESS/SDTEST.TXT");
+    sd.remove("/MCHESS/SDTEST.TXT");
     File32 w;
-    if (!w.open("/MEGACHESS/SDTEST.TXT", O_WRONLY | O_CREAT | O_TRUNC)) {
+    if (!w.open("/MCHESS/SDTEST.TXT", O_WRONLY | O_CREAT | O_TRUNC)) {
         Serial.println(F("cannot create a file"));
     } else {
         w.println(F("megachess write test"));
         w.close();
         File32 r;
-        if (r.open("/MEGACHESS/SDTEST.TXT", O_RDONLY) && r.fileSize() > 0) {
+        if (r.open("/MCHESS/SDTEST.TXT", O_RDONLY) && r.fileSize() > 0) {
             Serial.println(F("write + read back OK"));
             r.close();
         } else {
             Serial.println(F("wrote but could not read back"));
         }
-        sd.remove("/MEGACHESS/SDTEST.TXT");
+        sd.remove("/MCHESS/SDTEST.TXT");
     }
 
     Serial.println();

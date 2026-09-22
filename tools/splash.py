@@ -1,5 +1,5 @@
 r"""
-Convert an image into Megachess's boot splash: /MEGACHESS/SPLASH.IMG
+Convert an image into Megachess's boot splash: /IMAGES/SPLASH.IMG
 
     python tools/splash.py my_splash.png            -> SPLASH.IMG next to it
     python tools/splash.py my_splash.png H:\         -> straight onto the card

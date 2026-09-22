@@ -143,7 +143,7 @@ static void runTest() {
     Serial.println();
     Serial.print(F("--- opening book --- "));
     {
-        File f = SD.open("/MEGACHESS/BOOK.TXT", FILE_READ);
+        File f = SD.open("/MCHESS/BOOK.TXT", FILE_READ);
         if (!f) {
             Serial.println(F("MISSING"));
         } else {
@@ -164,21 +164,21 @@ static void runTest() {
 
     // Writing is what saving, settings and the PGN log all need.
     Serial.print(F("--- write test --- "));
-    SD.remove("/MEGACHESS/SDTEST.TXT");
-    File w = SD.open("/MEGACHESS/SDTEST.TXT", FILE_WRITE);
+    SD.remove("/MCHESS/SDTEST.TXT");
+    File w = SD.open("/MCHESS/SDTEST.TXT", FILE_WRITE);
     if (!w) {
         Serial.println(F("cannot create a file - card may be write protected"));
     } else {
         w.println(F("megachess write test"));
         w.close();
-        File r = SD.open("/MEGACHESS/SDTEST.TXT", FILE_READ);
+        File r = SD.open("/MCHESS/SDTEST.TXT", FILE_READ);
         if (r && r.size() > 0) {
             Serial.println(F("write + read back OK"));
             r.close();
         } else {
             Serial.println(F("wrote it but could not read it back"));
         }
-        SD.remove("/MEGACHESS/SDTEST.TXT");
+        SD.remove("/MCHESS/SDTEST.TXT");
     }
 
     Serial.println();

@@ -537,6 +537,7 @@ static bool confirm(const __FlashStringHelper* title, const __FlashStringHelper*
 static void start_game(bool resumed) {
     if (!resumed) new_game(); else { apply_options(); umax_new_game(); }
     screen = SCR_GAME;
+    tft.fillScreen(cur.panelBg);             // the menu goes before the board builds up
     ui_set_status(NULL, 0);
     ui_draw_game();
 }
@@ -566,12 +567,17 @@ static void handle_menu(int8_t btn) {
             return;
 
         case BTN_RESUME:
-            if (sd_has_saved_game() && sd_load_game()) {
+            if (!sd_has_saved_game()) {
+                ui_menu_note(F("no saved game on the card"), C_BAD);
+                return;
+            }
+            if (sd_load_game()) {
                 theme_apply(settings.theme);
                 sd_save_settings();
                 start_game(true);
                 return;
             }
+            ui_menu_note(F("saved game unreadable: see Serial"), C_BAD);
             return;
 
         case BTN_START:

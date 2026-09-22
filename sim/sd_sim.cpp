@@ -3,14 +3,38 @@
 #include <sys/stat.h>
 #include <direct.h>
 #include <io.h>
+#include <string.h>
 
 static std::string root = "SD_DATA";
 
 void sd_sim_set_root(const char* r) { root = r; }
 
+// The real library only understands 8.3 names - up to eight characters, one
+// dot, up to three more, none of |<>^+=?[];,*"\ - and fails silently on
+// anything else, directories included. A nine-letter folder cost a day. Refuse
+// the same names here so the simulator shows it.
+static bool legal83(const char* path) {
+    int n = 0, e = -1;                       // chars in the name part; -1 = no dot yet
+    for (const char* c = path; ; c++) {
+        if (*c == '/' || *c == '\\' || *c == 0) {
+            if (n > 8 || e > 3) return false;
+            n = 0; e = -1;
+            if (*c == 0) return true;
+            continue;
+        }
+        if (*c == '.') { if (e >= 0) return false; e = 0; continue; }
+        if (*c < 0x21 || *c > 0x7E || strchr("|<>^+=?[];,*\"\\", *c)) return false;
+        if (e >= 0) e++; else n++;
+    }
+}
+
 static std::string host(const char* path) {
     std::string p = root;
     if (!path || !*path) return p;
+    if (!legal83(path)) {
+        fprintf(stderr, "sd_sim: not an 8.3 name, the card library would fail: %s\n", path);
+        return p + "/__not_8_3__/" + path;   // a place that never exists
+    }
     if (path[0] != '/' && path[0] != '\\') p += '/';
     for (const char* c = path; *c; c++) p += (*c == '\\') ? '/' : *c;
     return p;

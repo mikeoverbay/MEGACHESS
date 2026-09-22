@@ -8,9 +8,9 @@ __pycache__/
 *.pyc
 
 # runtime state the simulator writes into the card folder
-SD_DATA/MEGACHESS/SAVE.DAT
-SD_DATA/MEGACHESS/SETTINGS.DAT
-SD_DATA/MEGACHESS/GAMES.PGN
+SD_DATA/MCHESS/SAVE.DAT
+SD_DATA/MCHESS/SETTINGS.DAT
+SD_DATA/MCHESS/GAMES.PGN
 
 # the original MicroChess download - the engine we build lives in src/engine
 MicroChess-main/

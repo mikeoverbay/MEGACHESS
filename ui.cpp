@@ -314,6 +314,12 @@ void ui_set_status(const __FlashStringHelper* msg, uint16_t colour) {
     if (screen == SCR_GAME) draw_status_card();
 }
 
+// A line in the menu's footer strip: why a button did nothing.
+void ui_menu_note(const __FlashStringHelper* msg, uint16_t colour) {
+    tft.fillRect(0, 258, SCR_W, 24, cur.panelBg);
+    text_mid_P(0, SCR_W, 262, 2, colour, msg);
+}
+
 void ui_toast(const __FlashStringHelper* msg, uint16_t colour, uint16_t ms) {
     ui_set_status(msg, colour);
     delay(ms);
