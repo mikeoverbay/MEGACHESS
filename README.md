@@ -107,7 +107,7 @@ FAT32, MBR — which is what yours already is. Written for you:
 /MCHESS/SAVE.DAT         written as you play, removed when a game ends
 /MCHESS/SETTINGS.DAT     mode, skill, theme, orientation, touch calibration
 /MCHESS/GAMES.PGN        every finished game, appended
-/IMAGES/SPLASH.IMG       boot picture, optional, made by tools/splash.py
+/IMAGES/SPLASH.IMG       boot picture, optional: tools/LOGO.png through tools/splash.py
 ```
 
 `SD_DATA/` in the repo is this card, file for file; copy it over. MCHESS is
