@@ -7,6 +7,7 @@
 //   snap:NAME    run the sketch until every queued tap is consumed, then save
 //   wait         run the sketch until idle (lets the engine move)
 //   showconfirm  draw the NEW-game dialog directly and snap it (visual check)
+//   showleave    the same for the MENU dialog
 //   showthinking draw the status card as it looks mid-search and snap it
 //
 // Taps are queued, not applied, so a script can answer a dialog the sketch
@@ -50,6 +51,7 @@ int main(int argc, char** argv) {
         if (a == "wait") { drain(); for (int k = 0; k < 10; k++) { loop(); sim_advance(50); } continue; }
         if (a.rfind("snap:", 0) == 0) { drain(); snap(a.substr(5)); continue; }
         if (a == "showconfirm") { drain(); ui_confirm_draw(F("NEW GAME?"), F("current game is lost")); snap("confirm"); continue; }
+        if (a == "showleave") { drain(); ui_confirm_draw(F("LEAVE GAME?"), F("RESUME gets it back")); snap("leave"); continue; }
         if (a == "showthinking") {           // the card as it looks mid-search
             drain();
             ai_thinking = true; ui_set_status(F("THINKING"), cur.accent); ui_draw_panel();
