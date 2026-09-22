@@ -305,9 +305,11 @@ on the short end for the USB socket and the power jack. The bottom is the
 plate: four posts for the Mega's mounting holes, slots for air, and a rim that
 registers inside the top.
 
-`case.gcode` is both parts on one bed as sliced in Cura 5.2.1 for the author's
-printer: 0.2 mm layers, 10% grid infill, no supports, a skirt, 225 °C nozzle,
-50 °C bed, 15.8 m of filament, 3 h 44 min.
+`case.gcode` is both parts on one bed, sliced in Cura 5.2.1 for a Creality
+Ender 3 Pro (Marlin flavour): 0.2 mm layers, 10% grid infill, no supports,
+225 °C nozzle, 50 °C bed, 15.8 m of filament, 3 h 44 min. It prints a draft
+shield 6 mm out from the parts and 10 mm high, which keeps the corners from
+curling as the print shrinks.
 
 ---
 
