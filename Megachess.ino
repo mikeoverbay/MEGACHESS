@@ -765,9 +765,12 @@ void setup() {
     game.init();
     apply_options();
 
+    // The menu is drawn in the dark as well and shown whole: after the logo
+    // it pops on, and without a card it is the first thing seen.
     screen = SCR_MENU;
+    if (logo) ui_display_off();
     ui_draw_menu();
-    if (!logo) ui_display_on();      // no card: the menu is the first thing seen
+    ui_display_on();
 }
 
 void loop() {

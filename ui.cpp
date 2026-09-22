@@ -734,3 +734,7 @@ void ui_begin() {
 void ui_display_on() {
     tft.writeRegister(0x29, NULL, 0);      // Display ON
 }
+
+void ui_display_off() {
+    tft.writeRegister(0x28, NULL, 0);      // Display OFF: draw the next screen unseen
+}

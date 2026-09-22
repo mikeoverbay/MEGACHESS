@@ -150,6 +150,7 @@ void ui_apply_calibration();
 void ui_draw_touch_readout();
 extern int16_t tap_x, tap_y;     // last tap, -1 until one happens
 void ui_display_on();              // ui_begin() leaves the panel dark until the first screen is ready
+void ui_display_off();             // ...and a screen can be drawn in the dark and shown whole
 void ui_toast(const __FlashStringHelper* msg, uint16_t colour, uint16_t ms);
 void ui_menu_note(const __FlashStringHelper* msg, uint16_t colour);   // menu footer line
 
