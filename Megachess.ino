@@ -588,7 +588,7 @@ static void handle_menu(int8_t btn) {
         default: return;
     }
     sd_save_settings();
-    ui_draw_menu();
+    ui_menu_update(btn);                     // just the part that changed; THEME repaints all
 }
 
 static void handle_game_touch(int16_t x, int16_t y) {

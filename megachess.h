@@ -123,6 +123,7 @@ enum MoveResult : uint8_t { MV_OK, MV_ILLEGAL, MV_SELF_CHECK, MV_NONE };
 // ---------------------------------------------------------------------------
 void ui_begin();
 void ui_draw_menu();
+void ui_menu_update(int8_t btn);           // repaint only what a menu tap changed
 void ui_draw_game();                       // full repaint
 void ui_draw_square(index_t sq);
 void ui_draw_panel();

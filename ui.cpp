@@ -401,20 +401,20 @@ void ui_draw_game() {
 #define M_ACT_Y   194
 #define M_ACT_H    44
 
-void ui_draw_menu() {
-    tft.fillScreen(cur.panelBg);
-
-    text_mid_P(0, SCR_W, 6, 4, cur.accent, F("MEGACHESS"));
-
-    text_at_P(20, M_MODE_Y - 20, 2, cur.textDim, F("GAME MODE"));
+// The menu in parts, so a tap repaints only what it changed. Each part paints
+// over its own footprint completely, so it can be redrawn in place.
+static void menu_modes() {
     button(20,  M_MODE_Y, M_MODE_W, M_MODE_H, F("VS ENGINE"),
            settings.mode == MODE_HUMAN_AI, true);
     button(176, M_MODE_Y, M_MODE_W, M_MODE_H, F("2 PLAYER"),
            settings.mode == MODE_HOTSEAT, true);
     button(332, M_MODE_Y, M_MODE_W, M_MODE_H, F("DEMO"),
            settings.mode == MODE_AI_AI, true);
+}
 
+static void menu_skill() {
     const bool needDepth = (settings.mode != MODE_HOTSEAT);
+    tft.fillRect(20, M_ROW2_Y - 20, 176, 16, cur.panelBg);   // the label changes width
     text_at_P(20, M_ROW2_Y - 20, 2, cur.textDim,
               settings.ply >= SKILL_FIRST_UMAX ? F("SKILL: uMAX") : F("SKILL: MCHESS"));
     button(20, M_ROW2_Y, 42, M_ROW2_H, F("-"), false, needDepth);
@@ -426,19 +426,24 @@ void ui_draw_menu() {
         text_mid(68, 64, M_ROW2_Y + 9, 3, needDepth ? cur.text : cur.textDim, d);
     }
     button(138, M_ROW2_Y, 42, M_ROW2_H, F("+"), false, needDepth);
+}
 
-    text_at_P(196, M_ROW2_Y - 20, 2, cur.textDim, F("PLAY AS"));
+static void menu_side() {
     button(196, M_ROW2_Y, 92, M_ROW2_H,
            settings.humanSide == White ? F("WHITE") : F("BLACK"),
            false, settings.mode == MODE_HUMAN_AI);
+}
 
-    text_at_P(296, M_ROW2_Y - 20, 2, cur.textDim, F("THEME"));
+static void menu_theme() {
     button_s(296, M_ROW2_Y, 90, M_ROW2_H, cur.name, false, true);
+}
 
-    text_at_P(394, M_ROW2_Y - 20, 2, cur.textDim, F("BOARD"));
+static void menu_board() {
     button(394, M_ROW2_Y, 84, M_ROW2_H,
            settings.flipBoard ? F("FLIP") : F("NORM"), false, true);
+}
 
+static void menu_actions() {
     const bool canResume = sd_has_saved_game();
     button(20,  M_ACT_Y, 170, M_ACT_H, F("RESUME"),   false, canResume);
     button(200, M_ACT_Y, 190, M_ACT_H, F("NEW GAME"), true,  true);
@@ -450,6 +455,36 @@ void ui_draw_menu() {
         text_mid_P(0, SCR_W, 262, 2, C_SEL, F("saved game: tap RESUME"));
     } else {
         text_mid_P(0, SCR_W, 262, 2, cur.textDim, F("SD ready: saves + PGN on"));
+    }
+}
+
+void ui_draw_menu() {
+    tft.fillScreen(cur.panelBg);
+    text_mid_P(0, SCR_W, 6, 4, cur.accent, F("MEGACHESS"));
+    text_at_P(20,  M_MODE_Y - 20, 2, cur.textDim, F("GAME MODE"));
+    menu_modes();
+    menu_skill();
+    text_at_P(196, M_ROW2_Y - 20, 2, cur.textDim, F("PLAY AS"));
+    menu_side();
+    text_at_P(296, M_ROW2_Y - 20, 2, cur.textDim, F("THEME"));
+    menu_theme();
+    text_at_P(394, M_ROW2_Y - 20, 2, cur.textDim, F("BOARD"));
+    menu_board();
+    menu_actions();
+}
+
+// After a tap on the menu: repaint only what that button changed. THEME is
+// the exception - every colour on the screen moves with it.
+void ui_menu_update(int8_t btn) {
+    switch (btn) {
+        case BTN_MODE_HUMAN_AI:
+        case BTN_MODE_HOTSEAT:
+        case BTN_MODE_AI_AI:  menu_modes(); menu_skill(); menu_side(); break;  // skill and side follow the mode
+        case BTN_PLY_DOWN:
+        case BTN_PLY_UP:      menu_skill(); break;
+        case BTN_SIDE:        menu_side(); menu_board(); break;   // playing Black turns the board
+        case BTN_FLIP:        menu_board(); break;
+        default:              ui_draw_menu(); break;
     }
 }
 
