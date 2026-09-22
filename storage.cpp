@@ -326,17 +326,20 @@ void sd_pgn_begin() {
     f.println();
     f.println(F("[Event \"Megachess\"]"));
     f.println(F("[Site \"Mega 2560\"]"));
+    // Who moves for each side: the engine's name follows the SKILL level.
+    const __FlashStringHelper* engine =
+        settings.ply >= SKILL_FIRST_UMAX ? F("micro-Max 4.8") : F("MicroChess");
     f.print(F("[White \""));
     f.print((settings.mode == MODE_HOTSEAT ||
              (settings.mode == MODE_HUMAN_AI && settings.humanSide == White))
-            ? F("Human") : F("MicroChess"));
+            ? F("Human") : engine);
     f.println(F("\"]"));
     f.print(F("[Black \""));
     f.print((settings.mode == MODE_HOTSEAT ||
              (settings.mode == MODE_HUMAN_AI && settings.humanSide == Black))
-            ? F("Human") : F("MicroChess"));
+            ? F("Human") : engine);
     f.println(F("\"]"));
-    f.print(F("[Depth \""));
+    f.print(F("[Skill \""));
     f.print(settings.ply);
     f.println(F("\"]"));
     f.println();
