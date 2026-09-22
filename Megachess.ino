@@ -734,6 +734,25 @@ void setup() {
     Serial.print(F("  free RAM: "));
     Serial.println(freeMemory());
 
+    // Is anything pressing the panel with nobody touching it? A lid that
+    // overlaps the active area reads as a finger that never lifts. The
+    // library counts z > 10 as a press.
+    {
+        int rx, ry, rz, zmax = 0, xat = 0, yat = 0;
+        for (uint8_t i = 0; i < 10; i++) {
+            tft.readTouchRaw(rx, ry, rz);
+            if (rz > zmax) { zmax = rz; xat = rx; yat = ry; }
+            delay(20);
+        }
+        Serial.print(F("  touch   : "));
+        if (zmax > 10) {
+            Serial.print(F("PRESSED, z ")); Serial.print(zmax);
+            Serial.print(F(" at raw ")); Serial.print(xat); Serial.print(','); Serial.println(yat);
+        } else {
+            Serial.print(F("idle, z ")); Serial.println(zmax);
+        }
+    }
+
     board.init();
     game.init();
     apply_options();
