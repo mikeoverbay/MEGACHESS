@@ -271,10 +271,10 @@ static void draw_status_card() {
     tft.fillRect(PANEL_X + 6, P_CARD_Y, PANEL_W - 12, P_CARD_H, cur.card);
     tft.drawRect(PANEL_X + 6, P_CARD_Y, PANEL_W - 12, P_CARD_H, cur.cardHi);
 
-    // 1: who - size 3. "THINKING" is 144px, the card's inner width is 148.
+    // 1: whose move - size 3. Always the side, even while the engine thinks;
+    // THINKING is the status line under it.
     text_mid_P(PANEL_X, PANEL_W, P_CARD_Y + 8, 3, cur.accent,
-               ai_thinking ? F("THINKING")
-                           : (game.turn == White ? F("WHITE") : F("BLACK")));
+               game.turn == White ? F("WHITE") : F("BLACK"));
 
     // 2: what - an explicit status wins, else say what to do
     if (status_text[0]) {
