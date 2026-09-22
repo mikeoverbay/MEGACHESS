@@ -91,7 +91,7 @@ FAT32, MBR — which is what yours already is. Written for you:
 
 ## Playing
 
-**Menu.** Mode (vs engine / 2 player / engine demo), engine depth 1–4, which
+**Menu.** Mode (vs engine / 2 player / engine demo), skill 1–4 (the engine's search depth), which
 colour you take, theme, board orientation. `RESUME` lights up when the card
 holds an unfinished game.
 

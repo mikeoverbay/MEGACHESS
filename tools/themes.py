@@ -10,7 +10,7 @@ so the three can never drift apart.
 # key: (light_sq, dark_sq, frame,
 #       panel_bg, card, card_hi, text, text_dim, accent,
 #       (w_top, w_bot, w_edge), (b_top, b_bot, b_edge))
-THEMES = [
+THEMES_RAW = [
     ("CLASSIC",
      (237, 234, 214), (125, 155, 118), (237, 234, 214),
      (26, 30, 28), (42, 48, 44), (58, 66, 60),
@@ -54,6 +54,68 @@ THEMES = [
      ((200, 255, 190), (150, 240, 140), (10, 40, 14), (10, 40, 14)),
      ((14, 44, 18), (6, 26, 10), (160, 255, 150), (70, 140, 70))),
 ]
+
+
+# ---------------------------------------------------------------------------
+# Panel colour compensation.
+#
+# The DIYables HX8357D renders our ambers a step toward yellow - an orange-
+# brown accent reads as pale yellow on the glass. Gamma cannot fix that (it
+# is a tone curve; a yellow stays a yellow at any brightness), so this is a
+# HUE rotation: colours in the yellow-orange band are turned toward orange
+# by PANEL_HUE_SHIFT degrees, with HSL lightness preserved so the legibility
+# gaps that make black pieces readable do not move. Greens and blues are
+# outside the band and untouched. Applied once here, so the firmware table,
+# the card artwork and the simulator all agree.
+#
+# Tune the one number. Negative = toward orange/brown, positive = yellow.
+# ---------------------------------------------------------------------------
+import colorsys
+
+PANEL_HUE_SHIFT = -14.0          # degrees
+HUE_BAND        = (15.0, 75.0)   # only hues in this range are turned
+HUE_FEATHER     = 8.0            # soft edge so the band has no cliff
+MIN_SATURATION  = 0.45           # leave creams and greys alone
+
+
+def _luma(r, g, b): return 0.299 * r + 0.587 * g + 0.114 * b
+
+
+def _corrected(rgb):
+    r, g, b = [v / 255.0 for v in rgb]
+    h, l, s = colorsys.rgb_to_hls(r, g, b)
+    hd = h * 360.0
+    lo, hi = HUE_BAND
+    # Only saturated colours in the band: creams (Classic's light square)
+    # sit in the band by hue but must not turn peach.
+    if s < MIN_SATURATION or hd < lo - HUE_FEATHER or hd > hi + HUE_FEATHER:
+        return tuple(rgb)
+    w = 1.0
+    if hd < lo:   w = (hd - (lo - HUE_FEATHER)) / HUE_FEATHER
+    elif hd > hi: w = ((hi + HUE_FEATHER) - hd) / HUE_FEATHER
+    hd = (hd + PANEL_HUE_SHIFT * w) % 360.0
+    nr, ng, nb = colorsys.hls_to_rgb(hd / 360.0, l, s)
+    # HSL lightness is not luma - green carries 59% of it - so turning toward
+    # orange darkens the colour. Rescale so luma matches the authored value
+    # and the legibility gaps come through untouched.
+    y0, y1 = _luma(r, g, b), _luma(nr, ng, nb)
+    if y1 > 0:
+        k = y0 / y1
+        nr, ng, nb = min(1.0, nr * k), min(1.0, ng * k), min(1.0, nb * k)
+    return (int(round(nr * 255)), int(round(ng * 255)), int(round(nb * 255)))
+
+
+def _correct_theme(t):
+    out = [t[0]]
+    for v in t[1:]:
+        if isinstance(v[0], tuple):          # a piece colourway: tuple of colours
+            out.append(tuple(_corrected(c) for c in v))
+        else:
+            out.append(_corrected(v))
+    return tuple(out)
+
+
+THEMES = [_correct_theme(t) for t in THEMES_RAW]
 
 
 def emit_c():

@@ -372,7 +372,7 @@ void ui_draw_panel() {
 // one was painted over the bottom of that button.
 void ui_draw_touch_readout() {
     char f[16];
-    snprintf(f, sizeof(f), "%s  depth %u", sd_pieces_ready() ? "SD" : "ROM",
+    snprintf(f, sizeof(f), "%s  skill %u", sd_pieces_ready() ? "SD" : "ROM",
              (unsigned) settings.ply);
     tft.fillRect(PANEL_X, P_FOOT_Y, PANEL_W, SCR_H - P_FOOT_Y, cur.panelBg);
     text_mid(PANEL_X, PANEL_W, P_FOOT_Y, 2, cur.textDim, f);
@@ -409,7 +409,7 @@ void ui_draw_menu() {
            settings.mode == MODE_AI_AI, true);
 
     const bool needDepth = (settings.mode != MODE_HOTSEAT);
-    text_at_P(20, M_ROW2_Y - 20, 2, cur.textDim, F("DEPTH"));
+    text_at_P(20, M_ROW2_Y - 20, 2, cur.textDim, F("SKILL"));
     button(20, M_ROW2_Y, 42, M_ROW2_H, F("-"), false, needDepth);
     tft.fillRect(68, M_ROW2_Y, 64, M_ROW2_H, cur.card);
     tft.drawRect(68, M_ROW2_Y, 64, M_ROW2_H, cur.cardHi);
@@ -674,7 +674,7 @@ int8_t ui_confirm_hit(int16_t x, int16_t y) {
 // Adafruit's HX8357D gamma table (Adafruit_HX8357 initd[], SETGAMMA 0xE0),
 // verified against their source. Comment the define out to A/B against the
 // controller's ROM default.
-#define MEGACHESS_GAMMA_ADAFRUIT
+// #define MEGACHESS_GAMMA_ADAFRUIT   // off: made things worse on this glass. ROM curve it is.
 static const uint8_t hx8357d_gamma[34] PROGMEM = {
     0x02, 0x0A, 0x11, 0x1d, 0x23, 0x35, 0x41, 0x4b, 0x4b, 0x42, 0x3A, 0x27, 0x1B, 0x08, 0x09, 0x03,
     0x02, 0x0A, 0x11, 0x1d, 0x23, 0x35, 0x41, 0x4b, 0x4b, 0x42, 0x3A, 0x27, 0x1B, 0x08, 0x09, 0x03,
