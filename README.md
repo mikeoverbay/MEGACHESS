@@ -229,9 +229,11 @@ benchmark that prints those figures for two clocks.
 `MEGA`; its header lists them: a 128-entry hash with 32-bit keys, the key table
 in flash, time-based deepening with a hard stop, the repetition locks moved out
 of the search into a small ring, and the console I/O replaced by the calls in
-`umax.h`. The author publishes the source on his site with no licence text that
-I could find, only that you may copy it. The file header, feature list and URL
-are kept intact.
+`umax.h`. The author publishes the source on his site for people to learn from
+and port, with no formal licence text; chessprogramming.org lists it as open
+source, and ports such as [mcu-max](https://github.com/Gissio/mcu-max) release
+theirs under MIT. This copy keeps the file header, feature list and URL intact
+and claims nothing beyond the changes marked `MEGA`.
 
 ---
 

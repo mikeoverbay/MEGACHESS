@@ -18,6 +18,8 @@
 /* - full FIDE rules (expt under-promotion) and move-legality checking     */
 /*                                                                         */
 /* Source: http://home.hccnet.nl/h.g.muller/umax4_8.c                      */
+/* Published by its author for learning and porting, without a formal      */
+/* licence text. The changes below are marked MEGA and claim nothing else. */
 /*                                                                         */
 /* Megachess: fitted to an 8-bit AVR with 16-bit ints. D() is the upstream */
 /* text line for line; every departure is marked MEGA. In short:           */
