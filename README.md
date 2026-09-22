@@ -299,6 +299,10 @@ stack: a Mega 2560 with the shield on it.
 Open either file on GitHub and it shows in 3D: drag to turn it, and the
 toolbar switches to wireframe.
 
+`case.step` is the model itself, both parts, straight out of Shapr3D, for
+anyone who wants to change it: a STEP opens in any CAD program as solids,
+where an STL is only the skin.
+
 Closed it is 113.9 x 66.3 x 29.6 mm, about 6 mm around the Mega's 101.6 x
 53.3 mm board. The top is the shell: a window for the screen and two cut-outs
 on the short end for the USB socket and the power jack. The bottom is the
@@ -328,7 +332,7 @@ bringup/          hardware bring-up sketch, run first
 tools/            asset generators, the mockup renderer, the micro-Max key
                   table generator and benchmark script
 umaxbench/        micro-Max speed and stack benchmark for the Mega
-case/             the printed case: two STL parts, the Cura project, a sliced gcode
+case/             the printed case: STEP model, two STL parts, Cura project, sliced gcode
 src/engine/       MicroChess
 src/umax/         micro-Max 4.8, fitted to the AVR
 ```
