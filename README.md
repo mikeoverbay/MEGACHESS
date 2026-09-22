@@ -309,7 +309,9 @@ registers inside the top.
 Ender 3 Pro (Marlin flavour): 0.2 mm layers, 10% grid infill, no supports,
 225 °C nozzle, 50 °C bed, 15.8 m of filament, 3 h 44 min. It prints a draft
 shield 6 mm out from the parts and 10 mm high, which keeps the corners from
-curling as the print shrinks.
+curling as the print shrinks. `case.3mf` is the Cura project behind it: both
+parts placed on the bed with every setting, so a different printer or
+filament is one change and a reslice.
 
 ---
 
@@ -326,7 +328,7 @@ bringup/          hardware bring-up sketch, run first
 tools/            asset generators, the mockup renderer, the micro-Max key
                   table generator and benchmark script
 umaxbench/        micro-Max speed and stack benchmark for the Mega
-case/             the printed case: two STL parts and a sliced gcode
+case/             the printed case: two STL parts, the Cura project, a sliced gcode
 src/engine/       MicroChess
 src/umax/         micro-Max 4.8, fitted to the AVR
 ```
