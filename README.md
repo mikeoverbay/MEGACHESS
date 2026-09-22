@@ -27,7 +27,7 @@ using up to 1.9 KB of that.
 | Arduino Mega 2560 R3 | the 256 KB of flash and the SPI on pins 50–52 are why it is a Mega and not an Uno |
 | DIYables 3.5" 480x320 TFT touch shield | resistive touch, microSD slot; HX8357D driver on current units, RM68140 on earlier ones ([product page](https://diyables.io/products/3.5-320x480-tft-lcd-color-touch-screen-shield-for-arduino-uno-mega)) |
 | microSD card | FAT32, MBR, 32 GB or smaller; built with a 16 GB card. Plus a reader for the PC |
-| 3 male-to-male jumper wires | Mega 50, 51, 52 to the shield's D12, D11, D13 — see below |
+| 3 short wires, soldered | on the underside of the Mega, pins 50, 51, 52 to D12, D11, D13 — see below. The case leaves no room for jumper wires on the headers |
 | USB A-to-B cable | powers it and programs it |
 | stylus | optional; a fingernail works on the resistive panel |
 | the printed case | two parts, see [The case](#the-case) |
@@ -88,6 +88,10 @@ elsewhere, so bridge them:
 | 51 | D11 | MOSI |
 | 52 | D13 | SCK |
 | — | D10 | CS — ordinary GPIO, already fine |
+
+Jumper wires on the headers will do for a test on the bench, but the case
+has no room for them: solder three short wires on the underside of the Mega,
+from the pads of 50, 51 and 52 to the pads of D12, D11 and D13.
 
 **Everything works without the card.** You lose the SD-loaded artwork (the
 built-in 1-bit pieces stand in), saving, the PGN log and the opening book. The
