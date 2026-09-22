@@ -1,6 +1,6 @@
 // Megachess simulator - the SD library over a folder on disk.
 //
-// sd_sim_set_root() points it at the sdcard/ staging folder, so the simulator
+// sd_sim_set_root() points it at the SD_DATA/ folder, so the simulator
 // reads exactly the .SET, BOOK.TXT and SPLASH.IMG the card carries and writes
 // its saves, settings and PGN there too.
 #pragma once

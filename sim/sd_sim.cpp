@@ -4,7 +4,7 @@
 #include <direct.h>
 #include <io.h>
 
-static std::string root = "sdcard";
+static std::string root = "SD_DATA";
 
 void sd_sim_set_root(const char* r) { root = r; }
 

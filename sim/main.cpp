@@ -1,7 +1,7 @@
 // Megachess simulator - runs the real sketch against the framebuffer panel and
 // the folder-backed SD, feeds it a tap script, and dumps frames.
 //
-//   megasim.exe <sdcard-root> <out-dir> [script...]
+//   megasim.exe <SD_DATA-root> <out-dir> [script...]
 //
 //   x,y          queue a tap at screen pixel x,y
 //   snap:NAME    run the sketch until every queued tap is consumed, then save

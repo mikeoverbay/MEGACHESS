@@ -6,7 +6,7 @@ Build and run the Megachess simulator.
 
 Steps: copy chessutil.cpp with its AVR freeMemory() removed, generate the
 prototypes the Arduino build would auto-insert for Megachess.ino, compile
-everything natively with MSVC, run it against sdcard/, and convert the PPM
+everything natively with MSVC, run it against SD_DATA/, and convert the PPM
 frames to PNG under sim/out/.
 """
 import glob
@@ -91,7 +91,7 @@ def run(script):
         for f in glob.glob(os.path.join(OUT, "*")): os.remove(f)
     os.makedirs(OUT, exist_ok=True)
     exe = os.path.join(BUILD, "megasim.exe")
-    sd = os.path.join(PROJ, "sdcard")
+    sd = os.path.join(PROJ, "SD_DATA")
     r = subprocess.run([exe, sd, OUT] + script, capture_output=True, text=True)
     for line in r.stderr.splitlines():
         if line.startswith("frame "): print(" ", os.path.basename(line[6:]))
