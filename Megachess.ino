@@ -286,7 +286,7 @@ static bool umax_tick() {
     return false;                 // the simulator queues taps ahead of time
 #else
     int tx, ty;
-    return tft.getTouch(tx, ty);  // a finger on the panel ends the think early
+    return touch_read(tx, ty);  // a finger on the panel ends the think early
 #endif
 }
 
@@ -488,10 +488,18 @@ static bool check_game_over() {
 // ---------------------------------------------------------------------------
 // touch
 // ---------------------------------------------------------------------------
+// Every poll of the panel comes through here, so a lid press at the edge can
+// never hold a wait or cut a search short either.
+bool touch_read(int& x, int& y) {
+    if (!tft.getTouch(x, y)) return false;
+    return x >= TOUCH_EDGE && x < SCR_W - TOUCH_EDGE &&
+           y >= TOUCH_EDGE && y < SCR_H - TOUCH_EDGE;
+}
+
 static bool get_tap(int16_t& x, int16_t& y) {
     static uint32_t last = 0;
     int tx, ty;
-    if (!tft.getTouch(tx, ty)) return false;
+    if (!touch_read(tx, ty)) return false;
     const uint32_t now = millis();
     if (now - last < 240) return false;      // debounce, and one tap per press
 
@@ -502,7 +510,7 @@ static bool get_tap(int16_t& x, int16_t& y) {
     uint8_t n = 1;
     const uint32_t until = now + 45;
     while ((int32_t) (millis() - until) < 0) {
-        if (tft.getTouch(tx, ty)) { sx += tx; sy += ty; n++; }
+        if (touch_read(tx, ty)) { sx += tx; sy += ty; n++; }
         delay(2);
     }
     last = millis();
@@ -516,7 +524,7 @@ static bool get_tap(int16_t& x, int16_t& y) {
 static void wait_release() {
     int x, y;
     uint8_t clear = 0;
-    while (clear < 6) { clear = tft.getTouch(x, y) ? 0 : clear + 1; delay(5); }
+    while (clear < 6) { clear = touch_read(x, y) ? 0 : clear + 1; delay(5); }
 }
 
 // Modal yes/no. Anything outside the two buttons, or 30 s of silence, is NO.
@@ -722,7 +730,7 @@ void setup() {
     if (logo) {
         int tx, ty;
         while ((int32_t) (millis() - (shown + 3000)) < 0) {
-            if (tft.getTouch(tx, ty)) break;
+            if (touch_read(tx, ty)) break;
         }
     }
 

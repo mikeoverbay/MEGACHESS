@@ -106,6 +106,11 @@ extern AppScreen screen;
 // the RAM note in README.md before raising it.
 #define UNDO_SLOTS 4
 
+// Touches this close to the screen edge are ignored. A case lid resting on
+// the panel, or a thumb on the bezel, can only ever register there, and no
+// target needs that last strip: a square is 40 px, a button 34.
+#define TOUCH_EDGE 8
+
 // SKILL on the menu: 1-2 are MicroChess plies, from SKILL_FIRST_UMAX up it is
 // micro-Max on a clock (see Megachess.ino).
 #define SKILL_MAX        7
@@ -203,6 +208,7 @@ extern index_t  last_from, last_to;
 extern bool     ai_thinking;
 
 bool side_is_human(Color side);
+bool touch_read(int& x, int& y);           // getTouch, minus the edge band
 void square_name(index_t sq, char* out);   // out[3]: "e4"
 
 #endif // MEGACHESS_H
