@@ -725,10 +725,12 @@ void ui_begin() {
     // Rotation 1 and 3 are both 480x320 landscape, 180 degrees apart.
     tft.setRotation(3);
     ui_apply_calibration();
-    // Display OFF (MIPI DCS 0x28): the panel shows nothing while the first
-    // screen - the logo, or the menu without a card - is written into its
-    // memory. ui_display_on() then shows it whole: no clear, no flash.
-    tft.writeRegister(0x28, NULL, 0);
+    // Display OFF (MIPI DCS 0x28) while the first screen - the logo, or the
+    // menu without a card - is written into the panel's memory; then
+    // ui_display_on() shows it whole. With the driver off this glass shows
+    // white (it is normally-white and the backlight is always on), so this
+    // only works from blank to picture, never between two pictures.
+    ui_display_off();
 }
 
 void ui_display_on() {
