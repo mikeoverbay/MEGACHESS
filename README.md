@@ -293,17 +293,17 @@ stack: a Mega 2560 with the shield on it.
 
 | file | outside size | triangles |
 |---|---|---|
-| `top.stl` | 113.9 x 66.3 x 20.0 mm | 9,460 |
-| `bottom.stl` | 113.9 x 66.3 x 9.6 mm | 60,528 |
+| [top.stl](case/top.stl) | 113.9 x 66.3 x 20.0 mm | 9,460 |
+| [bottom.stl](case/bottom.stl) | 113.9 x 66.3 x 9.6 mm | 60,528 |
+
+Open either file on GitHub and it shows in 3D: drag to turn it, and the
+toolbar switches to wireframe.
 
 Closed it is 113.9 x 66.3 x 29.6 mm, about 6 mm around the Mega's 101.6 x
 53.3 mm board. The top is the shell: a window for the screen and two cut-outs
 on the short end for the USB socket and the power jack. The bottom is the
 plate: four posts for the Mega's mounting holes, slots for air, and a rim that
 registers inside the top.
-
-![top, from outside](case/top_outside.png)
-![bottom, from inside](case/bottom_inside.png)
 
 `case.gcode` is both parts on one bed as sliced in Cura 5.2.1 for the author's
 printer: 0.2 mm layers, 10% grid infill, no supports, a skirt, 225 °C nozzle,
@@ -324,7 +324,7 @@ bringup/          hardware bring-up sketch, run first
 tools/            asset generators, the mockup renderer, the micro-Max key
                   table generator and benchmark script
 umaxbench/        micro-Max speed and stack benchmark for the Mega
-case/             the printed case: two STL parts, renders, a sliced gcode
+case/             the printed case: two STL parts and a sliced gcode
 src/engine/       MicroChess
 src/umax/         micro-Max 4.8, fitted to the AVR
 ```
