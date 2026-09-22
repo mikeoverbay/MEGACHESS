@@ -1,0 +1,18 @@
+# generated at build time
+sim/build/
+sim/out/
+sim/glcdfont.c
+sim/megachess_protos.h
+__pycache__/
+*.pyc
+
+# runtime state the simulator writes into the card staging folder
+sdcard/MEGACHESS/SAVE.DAT
+sdcard/MEGACHESS/SETTINGS.DAT
+sdcard/MEGACHESS/GAMES.PGN
+
+# the original MicroChess download - the engine we build lives in src/engine
+MicroChess-main/
+
+# downloaded archives - their contents are extracted alongside
+*.zip
