@@ -1,6 +1,7 @@
 # generated at build time
 sim/build/
 sim/out/
+umaxbench/src/
 sim/glcdfont.c
 sim/megachess_protos.h
 __pycache__/

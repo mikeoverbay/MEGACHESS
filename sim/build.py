@@ -59,6 +59,7 @@ def compile_sim():
         os.path.join(HERE, "sd_sim.cpp"),
         os.path.join(PROJ, "ui.cpp"),
         os.path.join(PROJ, "storage.cpp"),
+        os.path.join(PROJ, "src", "umax", "umax.cpp"),
         os.path.join(BUILD, "chessutil.cpp"),
     ] + engine
     flags = [
@@ -94,6 +95,8 @@ def run(script):
     r = subprocess.run([exe, sd, OUT] + script, capture_output=True, text=True)
     for line in r.stderr.splitlines():
         if line.startswith("frame "): print(" ", os.path.basename(line[6:]))
+    with open(os.path.join(OUT, "serial.txt"), "w", encoding="utf-8") as f:
+        f.write(r.stdout)                # what the sketch printed to Serial
     if r.returncode != 0:
         print("RUN FAILED (%d)" % r.returncode); print(r.stdout[-2000:]); print(r.stderr[-2000:]); sys.exit(1)
 

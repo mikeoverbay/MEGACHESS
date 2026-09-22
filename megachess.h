@@ -106,6 +106,11 @@ extern AppScreen screen;
 // the RAM note in README.md before raising it.
 #define UNDO_SLOTS 4
 
+// SKILL on the menu: 1-2 are MicroChess plies, from SKILL_FIRST_UMAX up it is
+// micro-Max on a clock (see Megachess.ino).
+#define SKILL_MAX        7
+#define SKILL_FIRST_UMAX 3
+
 // Defined in src/engine/engine.cpp; not declared in MicroChess.h upstream.
 extern void reset_turn_flags();
 

@@ -372,7 +372,7 @@ void ui_draw_panel() {
 // one was painted over the bottom of that button.
 void ui_draw_touch_readout() {
     char f[16];
-    snprintf(f, sizeof(f), "%s  skill %u", sd_pieces_ready() ? "SD" : "ROM",
+    snprintf(f, sizeof(f), "%s  skill %u", settings.ply >= SKILL_FIRST_UMAX ? "uMAX" : "MC",
              (unsigned) settings.ply);
     tft.fillRect(PANEL_X, P_FOOT_Y, PANEL_W, SCR_H - P_FOOT_Y, cur.panelBg);
     text_mid(PANEL_X, PANEL_W, P_FOOT_Y, 2, cur.textDim, f);
@@ -409,7 +409,8 @@ void ui_draw_menu() {
            settings.mode == MODE_AI_AI, true);
 
     const bool needDepth = (settings.mode != MODE_HOTSEAT);
-    text_at_P(20, M_ROW2_Y - 20, 2, cur.textDim, F("SKILL"));
+    text_at_P(20, M_ROW2_Y - 20, 2, cur.textDim,
+              settings.ply >= SKILL_FIRST_UMAX ? F("SKILL: uMAX") : F("SKILL: MCHESS"));
     button(20, M_ROW2_Y, 42, M_ROW2_H, F("-"), false, needDepth);
     tft.fillRect(68, M_ROW2_Y, 64, M_ROW2_H, cur.card);
     tft.drawRect(68, M_ROW2_Y, 64, M_ROW2_H, cur.cardHi);

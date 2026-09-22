@@ -17,6 +17,7 @@
  */
 #include <SD.h>
 #include "megachess.h"
+#include "src/umax/umax.h"
 
 Panel    tft;
 // board and game are defined by the engine itself, in src/engine/engine.cpp -
@@ -24,9 +25,25 @@ Panel    tft;
 
 // Calibration zeros mean "never calibrated" - the library defaults apply
 // until the CAL button on the menu is used.
-Settings settings = { SETTINGS_MAGIC, MODE_HUMAN_AI, 2, White, 0, 1 /* AMBER */,
-                      0, 0, 0, 0 };
+Settings settings = { SETTINGS_MAGIC, MODE_HUMAN_AI, 4 /* micro-Max, 2.5 s */, White, 0,
+                      1 /* AMBER */, 0, 0, 0, 0 };
 AppScreen screen = SCR_MENU;
+
+// ---------------------------------------------------------------------------
+// SKILL. Levels 1 and 2 are MicroChess searching that many plies. From
+// SKILL_FIRST_UMAX up the move comes from micro-Max on a clock, and MicroChess
+// only keeps the rules (and steps in if the two ever disagree).
+// ---------------------------------------------------------------------------
+static const uint16_t UMAX_BUDGET_MS[SKILL_MAX - SKILL_FIRST_UMAX + 1] PROGMEM =
+    { 1000, 2500, 5000, 10000, 20000 };
+
+static bool skill_uses_umax() { return settings.ply >= SKILL_FIRST_UMAX; }
+
+static uint16_t skill_budget_ms() {
+    uint8_t i = settings.ply - SKILL_FIRST_UMAX;
+    if (i > SKILL_MAX - SKILL_FIRST_UMAX) i = SKILL_MAX - SKILL_FIRST_UMAX;
+    return pgm_read_word(&UMAX_BUDGET_MS[i]);
+}
 
 uint8_t legal_mask[8];
 index_t sel_from  = -1;
@@ -78,10 +95,12 @@ bool side_is_human(Color side) {
 
 static void apply_options() {
     game.options.print_level        = None;      // the panel is the output
-    game.options.maxply             = settings.ply;
+    // With micro-Max choosing, MicroChess searches only as a fallback: keep it quick.
+    const uint8_t ply = skill_uses_umax() ? 2 : settings.ply;
+    game.options.maxply             = ply;
     game.options.minply             = 1;
-    game.options.max_max_ply        = settings.ply + 2;
-    game.options.max_quiescent_ply  = settings.ply + 2;
+    game.options.max_max_ply        = ply + 2;
+    game.options.max_quiescent_ply  = ply + 2;
     game.options.time_limit         = 2500;      // ms - also caps how
                                              // long touch is ignored
     game.options.live_update        = True;      // drives the thinking spinner
@@ -112,6 +131,7 @@ static void new_game() {
 
     sd_book_reset();
     sd_pgn_begin();
+    umax_new_game();
 }
 
 // ---------------------------------------------------------------------------
@@ -252,6 +272,77 @@ static MoveResult apply_move(index_t from, index_t to) {
     return MV_OK;
 }
 
+// ---------------------------------------------------------------------------
+// micro-Max as the move chooser (SKILL >= SKILL_FIRST_UMAX)
+//
+// The position is copied onto micro-Max's own board, it searches on a clock,
+// and the move it names is played through MicroChess exactly like a human's:
+// validated against MicroChess's own move list for that piece first. If the
+// two ever disagree, MicroChess's search decides instead.
+// ---------------------------------------------------------------------------
+static bool umax_tick() {
+    ui_think_tick();
+#ifdef SIM
+    return false;                 // the simulator queues taps ahead of time
+#else
+    int tx, ty;
+    return tft.getTouch(tx, ty);  // a finger on the panel ends the think early
+#endif
+}
+
+static bool umax_pick(index_t& from, index_t& to) {
+    umax_clear_board();
+    for (index_t i = 0; i < 64; i++) {
+        const Piece p = board.get(i);
+        if (isEmpty(p)) continue;
+        const uint8_t row = i >> 3, col = i & 7;
+        const bool white = (getSide(p) == White);
+        uint8_t code;
+        switch (getType(p)) {
+            case Pawn:
+                code = white ? UMAX_WPAWN : UMAX_BPAWN;
+                // Off its start rank it has moved; on its 6th/7th it is worth more.
+                if (row != (white ? 6 : 1)) code |= UMAX_MOVED;
+                if (row == (white ? 2 : 5)) code |= UMAX_RANK6;
+                if (row == (white ? 1 : 6)) code |= UMAX_RANK7;
+                break;
+            case Knight: code = UMAX_KNIGHT | UMAX_MOVED; break;
+            case Bishop: code = UMAX_BISHOP | UMAX_MOVED; break;
+            case Queen:  code = UMAX_QUEEN  | UMAX_MOVED; break;
+            case Rook:   code = UMAX_ROOK; if (hasMoved(p)) code |= UMAX_MOVED; break;  // castling rights
+            default:     code = UMAX_KING; if (hasMoved(p)) code |= UMAX_MOVED; break;
+        }
+        code |= white ? UMAX_WHITE : UMAX_BLACK;
+        umax_put(UMAX_SQ(row, col), code);
+    }
+
+    // En passant is on when the last move was a pawn's double step.
+    uint8_t ep = UMAX_NO_EP;
+    if (last_from >= 0 && last_to >= 0) {
+        const Piece  lp = board.get(last_to);
+        const int8_t dr = (int8_t) (last_to >> 3) - (int8_t) (last_from >> 3);
+        if (!isEmpty(lp) && getType(lp) == Pawn && (dr == 2 || dr == -2))
+            ep = UMAX_SQ((last_from >> 3) + dr / 2, last_to & 7);
+    }
+    umax_set_position(game.turn == White, ep);
+
+#ifdef SIM
+    const uint8_t maxDepth = 5;   // simulated time stands still during a search
+#else
+    const uint8_t maxDepth = 20;
+#endif
+    UmaxResult r;
+    if (!umax_think(skill_budget_ms(), maxDepth, r)) return false;
+    Serial.print(F("uMAX d")); Serial.print(r.depth);
+    Serial.print(F(" score ")); Serial.print(r.score);
+    Serial.print(' '); Serial.print(r.nodes); Serial.print(F(" nodes "));
+    Serial.print(r.ms); Serial.print(F(" ms, stack low "));
+    Serial.println(umax_stack_low());
+    from = (index_t) ((r.from >> 4) * 8 + (r.from & 7));
+    to   = (index_t) ((r.to   >> 4) * 8 + (r.to   & 7));
+    return true;
+}
+
 static MoveResult ai_move() {
     const bool whitesTurn = (game.turn == White);
 
@@ -274,6 +365,44 @@ static MoveResult ai_move() {
         game.supplied      = move_t(bf, bt, 0L);
         game.book_supplied = True;
         game.supply_valid  = False;
+    } else if (skill_uses_umax()) {
+        index_t uf, ut;
+        const bool picked = umax_pick(uf, ut);
+        if (!picked) Serial.println(F("uMAX: no move, MicroChess decides"));
+        if (picked) {
+            build_legal_mask(uf);
+            const bool legal = (getbit(legal_mask, ut)) != 0;
+            memset(legal_mask, 0, sizeof(legal_mask));
+            if (!legal) Serial.println(F("uMAX: move not in MicroChess list, its search decides"));
+            if (legal) {
+                const Piece moved   = board.get(uf);
+                const bool  capture = !isEmpty(board.get(ut));
+                game.supplied      = move_t(uf, ut, 0L);
+                game.user_supplied = True;
+                game.supply_valid  = True;
+                move_t mv = game.supplied;
+                commit(mv, wmove, bmove, whitesTurn);
+                game.stats.stop_move_stats();
+                const bool selfCheck = whitesTurn ? game.white_king_in_check
+                                                  : game.black_king_in_check;
+                if (!selfCheck) {
+                    last_from = mv.from;
+                    last_to   = mv.to;
+                    sd_pgn_move(mv.from, mv.to, moved, capture);
+                    return MV_OK;
+                }
+                // MicroChess says that leaves the king attacked. Take it back
+                // and let its own search decide.
+                Serial.println(F("uMAX: move leaves king attacked, MicroChess decides"));
+                pop_undo();
+                push_undo();
+                game.stats.start_move_stats();
+                game.stats.move_stats.depth = 0;
+                reset_turn_flags();
+                game.alpha = wmove.value;
+                game.beta  = bmove.value;
+            }
+        }
     }
 
     if (game.options.shuffle_pieces) {
@@ -406,7 +535,7 @@ static bool confirm(const __FlashStringHelper* title, const __FlashStringHelper*
 }
 
 static void start_game(bool resumed) {
-    if (!resumed) new_game(); else apply_options();
+    if (!resumed) new_game(); else { apply_options(); umax_new_game(); }
     screen = SCR_GAME;
     ui_set_status(NULL, 0);
     ui_draw_game();
@@ -418,7 +547,7 @@ static void handle_menu(int8_t btn) {
         case BTN_MODE_HOTSEAT:  settings.mode = MODE_HOTSEAT;  break;
         case BTN_MODE_AI_AI:    settings.mode = MODE_AI_AI;    break;
         case BTN_PLY_DOWN:      if (settings.ply > 1) settings.ply--; break;
-        case BTN_PLY_UP:        if (settings.ply < 4) settings.ply++; break;
+        case BTN_PLY_UP:        if (settings.ply < SKILL_MAX) settings.ply++; break;
         case BTN_SIDE:
             settings.humanSide = (settings.humanSide == White) ? Black : White;
             // Playing Black reads far better with the board turned round.
@@ -557,6 +686,7 @@ void setup() {
     // A15 is not on the shield's footprint, so it floats - good enough to
     // seed the engine's randomness and the opening book's choice of line.
     randomSeed(analogRead(A15) ^ micros());
+    umax_hook = umax_tick;
 
     theme_apply(settings.theme);
     ui_begin();

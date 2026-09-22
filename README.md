@@ -9,12 +9,14 @@ resume after a power cut, a PGN log of every finished game, and an opening book
 
 | | |
 |---|---|
-| rules and search | [MicroChess](https://github.com/ripred/MicroChess) by Trent M. Wyatt, MIT, in `src/engine` |
+| rules, and the search at SKILL 1–2 | [MicroChess](https://github.com/ripred/MicroChess) by Trent M. Wyatt, MIT, in `src/engine` |
+| the search at SKILL 3–7 | [micro-Max 4.8](http://home.hccnet.nl/h.g.muller/max-src2.html) by H.G. Muller, in `src/umax` |
 | display and touch | DIYables_TFT_Touch_Shield 2.2.1 |
 | artwork, UI, storage, engine glue | this sketch |
 
-Built for `arduino:avr:mega`. Current size: **61.4 KB flash (24%)**, **2656 B
-RAM (32%)**, leaving 5.5 KB for the engine's recursive search.
+Built for `arduino:avr:mega`. Current size: **76.4 KB flash (30%)**, **4729 B
+RAM (57%)**, leaving 3.4 KB for the searches' recursion; micro-Max was measured
+using up to 1.9 KB of that.
 
 ---
 
@@ -91,8 +93,10 @@ FAT32, MBR — which is what yours already is. Written for you:
 
 ## Playing
 
-**Menu.** Mode (vs engine / 2 player / engine demo), skill 1–4 (the engine's search depth), which
-colour you take, theme, board orientation. `RESUME` lights up when the card
+**Menu.** Mode (vs engine / 2 player / engine demo), skill 1–7 (1–2 is
+MicroChess searching that many plies, 3–7 is micro-Max on a clock of 1, 2.5, 5,
+10 or 20 seconds — the label says which), which colour you take, theme, board
+orientation. `RESUME` lights up when the card
 holds an unfinished game.
 
 **Board.** Tap a piece to pick it up — its legal destinations appear as dots,
@@ -185,6 +189,44 @@ strict SAN, the place to add it is `lan()` in [storage.cpp](storage.cpp).
 
 ---
 
+## Two engines
+
+MicroChess is the rules. It generates the move list you see as dots, plays
+every move, and detects check, mate and repetition. At SKILL 1 and 2 it also
+chooses the engine's move, searching 1 or 2 plies.
+
+From SKILL 3 up the move comes from micro-Max 4.8, H.G. Muller's engine in
+under 2 KB of C, in `src/umax`. On the engine's turn the position is copied
+onto micro-Max's own 0x88 board, it searches for the level's clock, and the
+move it names is played through MicroChess exactly as a human's would be:
+checked against MicroChess's move list for that piece first. Should the two
+ever disagree, MicroChess's own search decides and a line saying so goes to
+Serial. In a 126-move simulator game between two micro-Max sides that never
+happened.
+
+The Mega runs micro-Max at about 700 nodes a second. Measured with
+`umaxbench`: a 2.5 s clock reaches depth 3 to 4, a 10 s clock depth 4 to 5.
+The clock is a budget, not a limit. The engine starts another pass while less
+than a third of it has gone, and a hard stop at one and a half times the
+budget unwinds the search with the best move so far. Touching the panel while
+it thinks does the same, so MENU works mid-think.
+
+Each micro-Max move prints one line to Serial at 115200: depth, score, nodes,
+time, and how close the stack came to the heap.
+
+`sh tools/umax_bench.sh -u -p COM8` builds and uploads `umaxbench`, a self-play
+benchmark that prints those figures for two clocks.
+
+`src/umax/umax.cpp` is the upstream text line for line with every change marked
+`MEGA`; its header lists them: a 128-entry hash with 32-bit keys, the key table
+in flash, time-based deepening with a hard stop, the repetition locks moved out
+of the search into a small ring, and the console I/O replaced by the calls in
+`umax.h`. The author publishes the source on his site with no licence text that
+I could find, only that you may copy it. The file header, feature list and URL
+are kept intact.
+
+---
+
 ## Two patches to the engine
 
 `src/engine` is upstream MicroChess apart from these. Both are marked
@@ -221,8 +263,11 @@ storage.cpp       SD: artwork, settings, save/resume, PGN, book
 themes_gen.h      generated - theme table
 pieces_bmp.h      generated - 1-bit fallback artwork
 bringup/          hardware bring-up sketch, run first
-tools/            asset generators and the mockup renderer
+tools/            asset generators, the mockup renderer, the micro-Max key
+                  table generator and benchmark script
+umaxbench/        micro-Max speed and stack benchmark for the Mega
 src/engine/       MicroChess
+src/umax/         micro-Max 4.8, fitted to the AVR
 ```
 
 Screen is 480x320 landscape (rotation 1): board 320x320 at 40px a square,
@@ -236,3 +281,8 @@ snapshot, so raising it costs real memory — and the engine checks free RAM at
 runtime to decide how deep to search (`options.low_mem_limit`, 810 bytes), so
 squeezing the stack makes it play *worse*, quietly. Re-read the compiler's RAM
 line after changing it.
+
+`src/umax` adds 1.4 KB of globals: the hash table (`U` entries of 9 bytes in
+`umax.cpp`, 128 of them), the board and the lock ring. Doubling `U` to 256 left
+2.3 KB for the stack, and micro-Max alone was measured using up to 1.9 KB of it
+on a 10 s clock, so 128 it is.
