@@ -3,7 +3,7 @@
 Chess on an Arduino Mega 2560 R3 with the DIYables 3.5" 480x320 touch shield.
 
 Tap a piece, tap where it goes. Play the engine, play a friend on the one
-screen, or let the engine play itself. Four board themes, a saved game you can
+screen, or let the engine play itself. Five board themes, a saved game you can
 resume after a power cut, a PGN log of every finished game, and an opening book
 — the last three from the SD card.
 
@@ -17,6 +17,25 @@ resume after a power cut, a PGN log of every finished game, and an opening book
 Built for `arduino:avr:mega`. Current size: **76.4 KB flash (30%)**, **4729 B
 RAM (57%)**, leaving 3.4 KB for the searches' recursion; micro-Max was measured
 using up to 1.9 KB of that.
+
+---
+
+## Parts
+
+| part | notes |
+|---|---|
+| Arduino Mega 2560 R3 | the 256 KB of flash and the SPI on pins 50–52 are why it is a Mega and not an Uno |
+| DIYables 3.5" 480x320 TFT touch shield | resistive touch, microSD slot; HX8357D driver on current units, RM68140 on earlier ones ([product page](https://diyables.io/products/3.5-320x480-tft-lcd-color-touch-screen-shield-for-arduino-uno-mega)) |
+| microSD card | FAT32, MBR, 32 GB or smaller; built with a 16 GB card. Plus a reader for the PC |
+| 3 male-to-male jumper wires | Mega 50, 51, 52 to the shield's D12, D11, D13 — see below |
+| USB A-to-B cable | powers it and programs it |
+| stylus | optional; a fingernail works on the resistive panel |
+| the printed case | two parts, see [The case](#the-case) |
+
+Software: Arduino IDE 2 (its bundled arduino-cli does the builds here), the
+DIYables_TFT_Touch_Shield library 2.2.1 and the SD library 1.3.0, Python 3 with
+Pillow for the tools (skia-python as well to re-render the piece art), and,
+only for the simulator, Visual Studio's C++ compiler.
 
 ---
 
@@ -134,7 +153,7 @@ happens on the tap instead.
 
 ## Themes and artwork
 
-Four themes, switchable from the menu, defaulting to **Amber**. Board colours
+Five themes, switchable from the menu, defaulting to **Amber**. Board colours
 live in [themes_gen.h](themes_gen.h); the matching pieces are on the card.
 
 The card artwork is the **Alpha** chess set by Eric Bentzen, as shipped in
@@ -263,6 +282,31 @@ passant, repetition — is untouched upstream code.
 
 ---
 
+## The case
+
+Two parts in `case/`, the author's own design in Shapr3D for exactly this
+stack: a Mega 2560 with the shield on it.
+
+| file | outside size | triangles |
+|---|---|---|
+| `top.stl` | 113.9 x 66.3 x 20.0 mm | 9,460 |
+| `bottom.stl` | 113.9 x 66.3 x 9.6 mm | 60,528 |
+
+Closed it is 113.9 x 66.3 x 29.6 mm, about 6 mm around the Mega's 101.6 x
+53.3 mm board. The top is the shell: a window for the screen and two cut-outs
+on the short end for the USB socket and the power jack. The bottom is the
+plate: four posts for the Mega's mounting holes, slots for air, and a rim that
+registers inside the top.
+
+![top, from outside](case/top_outside.png)
+![bottom, from inside](case/bottom_inside.png)
+
+`case.gcode` is both parts on one bed as sliced in Cura 5.2.1 for the author's
+printer: 0.2 mm layers, 10% grid infill, no supports, a skirt, 225 °C nozzle,
+50 °C bed, 15.8 m of filament, 3 h 44 min.
+
+---
+
 ## Layout
 
 ```
@@ -276,6 +320,7 @@ bringup/          hardware bring-up sketch, run first
 tools/            asset generators, the mockup renderer, the micro-Max key
                   table generator and benchmark script
 umaxbench/        micro-Max speed and stack benchmark for the Mega
+case/             the printed case: two STL parts, renders, a sliced gcode
 src/engine/       MicroChess
 src/umax/         micro-Max 4.8, fitted to the AVR
 ```
