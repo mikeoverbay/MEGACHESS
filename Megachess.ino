@@ -588,6 +588,15 @@ static void handle_menu(int8_t btn) {
 static void handle_game_touch(int16_t x, int16_t y) {
     const int8_t btn = ui_hit_button(x, y);
     if (btn == BTN_MENU) {
+        // Leaving a game in progress gets the same second look as wiping one.
+        // With a card it is saved after every move and RESUME brings it back;
+        // without one the menu's NEW GAME is the only way on.
+        if (game.state == PLAYING && game.move_num > 0 &&
+            !confirm(F("LEAVE GAME?"), sd_present() ? F("RESUME gets it back")
+                                                    : F("current game is lost"))) {
+            ui_draw_game();                      // paint over the box
+            return;
+        }
         screen = SCR_MENU;
         ui_draw_menu();
         return;
