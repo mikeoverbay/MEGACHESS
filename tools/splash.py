@@ -54,8 +54,8 @@ def main():
     hdr = (b"MCSP" + struct.pack("<BHH", mode, W, H)).ljust(16, b"\0")
 
     if os.path.isdir(dest):
-        os.makedirs(os.path.join(dest, "MEGACHESS"), exist_ok=True)
-        out = os.path.join(dest, "MEGACHESS", "SPLASH.IMG")
+        os.makedirs(os.path.join(dest, "IMAGES"), exist_ok=True)
+        out = os.path.join(dest, "IMAGES", "SPLASH.IMG")
     else:
         out = dest
     with open(out, "wb") as f:
