@@ -28,7 +28,7 @@ using up to 1.9 KB of that.
 |---|---|
 | Arduino Mega 2560 R3 | the 256 KB of flash and the SPI on pins 50–52 are why it is a Mega and not an Uno |
 | DIYables 3.5" 480x320 TFT touch shield | resistive touch, microSD slot; HX8357D driver on current units, RM68140 on earlier ones ([product page](https://diyables.io/products/3.5-320x480-tft-lcd-color-touch-screen-shield-for-arduino-uno-mega)) |
-| microSD card | FAT32, MBR, 32 GB or smaller; built with a 16 GB card. Plus a reader for the PC |
+| microSD card | any size from 1 GB up, FAT32 with MBR; it needs under half a megabyte. Built with a 16 GB card. Plus a reader for the PC |
 | 3 short wires, soldered | on the underside of the Mega, pins 50, 51, 52 to D12, D11, D13 — see below. The case leaves no room for jumper wires on the headers |
 | USB A-to-B cable | powers it and programs it |
 | stylus | optional; a fingernail works on the resistive panel |
