@@ -774,7 +774,6 @@ static void handle_game_touch(int16_t x, int16_t y) {
     const index_t oldFrom = last_from, oldTo = last_to;
     sel_from = -1;
 
-    ui_ripple(sq);                           // tap acknowledged, instantly
     const MoveResult r = apply_move(from, sq);
     if (r == MV_OK) {
         redraw_after_move(oldFrom, oldTo);
@@ -896,12 +895,6 @@ void loop() {
     if (screen == SCR_GAME && game.state == PLAYING &&
         !side_is_human((Color) game.turn)) {
 
-        // The ripple plays on the piece that was just moved - yours, in a
-        // game against the engine. Capture what is there NOW: once the
-        // search starts the board is full of trial moves and cannot be read.
-        think_sq    = last_to;
-        think_piece = (last_to >= 0) ? board.get(last_to) : Empty;
-
         ai_thinking = true;
         ui_set_status(F("THINKING"), cur.accent);
 
@@ -909,16 +902,17 @@ void loop() {
         const MoveResult r = ai_move();
         ai_thinking = false;
 
-        // On success redraw_after_move() repaints oldTo (== think_sq) from
-        // the real board. On any other outcome nothing else touches it, so
-        // clear the last ring cycle here.
-        if (r != MV_OK && think_sq >= 0) ui_draw_square(think_sq);
-        think_sq = -1;
-
         if (r == MV_NONE) {
             if (game.state == PLAYING) call_no_moves();   // mate or stalemate, whichever it is
         } else {
+            // Show the move: three flips where the piece was, then three where
+            // it went. The screen still shows the old position here, and the
+            // piece that moved is now on last_to.
+            const Piece moved = board.get(last_to);
+            ui_blink_square(last_from, moved);
             redraw_after_move(oldFrom, oldTo);
+            ui_blink_square(last_to, moved);
+            ui_draw_square(last_to);                 // its border back
             sd_save_game();
             settle_side_to_move();       // the other side may now have no move at all
         }

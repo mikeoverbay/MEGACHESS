@@ -76,7 +76,6 @@ void theme_apply(uint8_t idx);
 #define C_TARGET    RGB( 60, 170,  95)
 #define C_LASTMOVE  RGB(216, 190,  72)
 #define C_CHECK     RGB(222,  72,  60)
-#define C_RIPPLE    RGB(255,  64,  40)   // tap ripple + thinking ripple: feedback, not state
 #define C_BAD       RGB(222,  92,  80)
 
 // ---------------------------------------------------------------------------
@@ -137,15 +136,10 @@ void ui_show_targets(index_t from, const uint8_t* mask);
 void ui_clear_targets(index_t from, const uint8_t* mask);
 void ui_draw_over(const __FlashStringHelper* who, uint16_t colour);
 void ui_calibrate();               // 2-point touch calibration, saves to SD
-void ui_ripple(index_t sq);        // rings out from a square: tap acknowledged
+void ui_blink_square(index_t sq, Piece p);   // flips a square three times: the engine's move
 void ui_confirm_draw(const __FlashStringHelper* title, const __FlashStringHelper* line);
 int8_t ui_confirm_hit(int16_t x, int16_t y);   // 1 yes, 0 no, -1 neither
-void ui_think_tick();              // one spinner frame; the engine calls this
-// Where the thinking ripple plays and what sits there. Captured BEFORE the
-// search starts: the board cannot be read mid-search, it is full of trial
-// moves.
-extern index_t think_sq;
-extern Piece   think_piece;
+void ui_think_tick();              // the engines call this while searching; draws nothing
 void ui_apply_calibration();
 void ui_draw_touch_readout();
 extern int16_t tap_x, tap_y;     // last tap, -1 until one happens

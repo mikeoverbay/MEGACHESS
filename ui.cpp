@@ -196,58 +196,30 @@ static void draw_target(index_t sq) {
     }
 }
 
-// Rings appearing outward from a square, ~160ms. Nothing is erased: the
-// square gets redrawn by whatever happens next (the move lands, or the
-// rejection toast), so the rings simply vanish with the decision.
-void ui_ripple(index_t sq) {
+// The engine's move, announced: a square flips to the opposite square colour
+// three times with the piece on it, then settles. The sketch does the square
+// it leaves before the board is repainted (the piece is still shown there)
+// and the square it lands on after.
+void ui_blink_square(index_t sq, Piece p) {
     int16_t x, y;
     sq_to_xy(sq, x, y);
-    const int16_t cx = x + SQ / 2, cy = y + SQ / 2;
-    // radius 20 would put the outer ring's last pixel in the next square
-    for (uint8_t r = 3; r <= 18; r += 5) {
-        tft.drawCircle(cx, cy, r,     C_RIPPLE);
-        tft.drawCircle(cx, cy, r + 1, C_RIPPLE);
-        delay(40);
-    }
-}
-
-index_t think_sq    = -1;
-Piece   think_piece = Empty;
-
-// One frame of the thinking ripple, on the piece you just moved. Called from
-// inside the engine's search through its own live_update hook
-// (set_led_strip), which the engine rate-limits to ~10ms, so this only has
-// to throttle itself to something the eye can follow.
-//
-// Rings are not erased individually - erasing on the board would mean
-// restoring the piece art under each ring, and the board cannot be read
-// mid-search. Instead four rings ripple outward over ~440ms, then the square
-// is repainted once from the piece captured before the search, and the cycle
-// repeats. One SD blit per cycle is under 10% of think time.
-void ui_think_tick() {
-    static uint8_t  phase = 0;
-    static uint32_t last  = 0;
-    if (!ai_thinking || think_sq < 0) { phase = 0; return; }
-    if (millis() - last < 110) return;
-    last = millis();
-
-    int16_t x, y;
-    sq_to_xy(think_sq, x, y);
-    const int16_t cx = x + SQ / 2, cy = y + SQ / 2;
-
-    if (phase == 0) {
-        const int8_t c = think_sq % 8, r = think_sq / 8;
-        const uint16_t bg = (((c + r) & 1) == 0) ? cur.lightSq : cur.darkSq;
+    const int8_t c = sq % 8, r = sq / 8;
+    const bool light = (((c + r) & 1) == 0);
+    const uint16_t bg = light ? cur.lightSq : cur.darkSq;
+    const uint16_t alt = light ? cur.darkSq : cur.lightSq;
+    for (uint8_t i = 0; i < 3; i++) {
+        tft.fillRect(x, y, SQ, SQ, alt);
+        if (!isEmpty(p)) draw_piece(p, x, y, alt);
+        delay(120);
         tft.fillRect(x, y, SQ, SQ, bg);
-        tft.drawRect(x,     y,     SQ,     SQ,     C_LASTMOVE);   // it IS last_to
-        tft.drawRect(x + 1, y + 1, SQ - 2, SQ - 2, C_LASTMOVE);
-        if (!isEmpty(think_piece)) draw_piece(think_piece, x, y, bg);
+        if (!isEmpty(p)) draw_piece(p, x, y, bg);
+        delay(120);
     }
-    const uint8_t rad = 3 + phase * 5;                         // 3, 8, 13, 18
-    tft.drawCircle(cx, cy, rad,     C_RIPPLE);
-    tft.drawCircle(cx, cy, rad + 1, C_RIPPLE);
-    phase = (phase + 1) & 3;
 }
+
+// Called from inside the engines' searches (MicroChess's live_update hook,
+// micro-Max's poll). Nothing is drawn while thinking any more.
+void ui_think_tick() {}
 
 void ui_show_targets(index_t from, const uint8_t* mask) {
     ui_draw_square(from);
