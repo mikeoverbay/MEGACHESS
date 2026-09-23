@@ -166,7 +166,7 @@ orientation. `RESUME` lights up when the card
 holds an unfinished game.
 
 **Board.** Tap a piece to pick it up — its legal destinations appear as dots,
-and rings around pieces it can take. Tap a destination to play it, tap the
+and a circle around each piece it can take. Tap a destination to play it, tap the
 piece again to put it down, or tap another of your pieces to switch. The last
 move keeps an amber border; a king in check gets a red one.
 
@@ -286,8 +286,8 @@ benchmark that prints those figures for two clocks.
 `src/umax/umax.cpp` is the upstream text line for line with every change marked
 `MEGA`; its header lists them: a 128-entry hash with 32-bit keys, the key table
 in flash, time-based deepening with a hard stop, the repetition locks moved out
-of the search into a small ring, and the console I/O replaced by the calls in
-`umax.h`. The author publishes the source on his site for people to learn from
+of the search into a short list that recycles its oldest entry, and the console
+I/O replaced by the calls in `umax.h`. The author publishes the source on his site for people to learn from
 and port, with no formal licence text; chessprogramming.org lists it as open
 source, and ports such as [mcu-max](https://github.com/Gissio/mcu-max) release
 theirs under MIT. This copy keeps the file header, feature list and URL intact
@@ -376,6 +376,10 @@ Screen is 480x320 landscape (rotation 1): board 320x320 at 40px a square,
 panel 160 wide on the right. The 40px square is why pieces blit with no
 scaling.
 
+When the engine moves, the square it leaves flips to the opposite square
+colour three times with the piece still on it, the board repaints, and the
+square it lands on flips three times. Your own moves get no announcement.
+
 ### RAM
 
 `UNDO_SLOTS` in `megachess.h` is 4. Each slot is a `board_t` + `game_t`
@@ -385,6 +389,7 @@ squeezing the stack makes it play *worse*, quietly. Re-read the compiler's RAM
 line after changing it.
 
 `src/umax` adds 1.4 KB of globals: the hash table (`U` entries of 9 bytes in
-`umax.cpp`, 128 of them), the board and the lock ring. Doubling `U` to 256 left
+`umax.cpp`, 128 of them), the board, and a list of the last 24 game positions
+for repetition detection. Doubling `U` to 256 left
 2.3 KB for the stack, and micro-Max alone was measured using up to 1.9 KB of it
 on a 10 s clock, so 128 it is.
