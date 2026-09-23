@@ -2,6 +2,8 @@
 
 Chess on an Arduino Mega 2560 R3 with the DIYables 3.5" 480x320 touch shield.
 
+![Megachess in its case, mid-game](case/megachess_photo.png)
+
 Tap a piece, tap where it goes. Play the engine, play a friend on the one
 screen, or let the engine play itself. Five board themes, a saved game you can
 resume after a power cut, a PGN log of every finished game, and an opening book
