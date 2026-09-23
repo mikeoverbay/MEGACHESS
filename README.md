@@ -41,6 +41,39 @@ only for the simulator, Visual Studio's C++ compiler.
 
 ---
 
+## Building it
+
+### In the Arduino IDE
+
+1. Get the folder onto your machine, as a clone or a zip, and keep its name
+   `Megachess`: the IDE wants the folder and its `.ino` to match.
+2. **Tools > Board > Arduino AVR Boards > Arduino Mega or Mega 2560**, and
+   **Tools > Port** to the Mega.
+3. **Sketch > Include Library > Manage Libraries**, search
+   *DIYables_TFT_Touch_Shield*, install **2.2.1**. The SD library comes with
+   the IDE.
+4. Open `Megachess.ino`. The engines in `src/engine` and `src/umax` compile
+   along with it; nothing to add.
+5. Check `megachess.h` names your shield's driver (see *Run this first*),
+   then **Upload**.
+
+The Serial Monitor at 115200 shows the boot report, and while you play, one
+line per engine move. Close it before an upload if the upload times out: it
+holds the port.
+
+The other sketches open the same way: `bringup/bringup.ino`, and
+`umaxbench/umaxbench.ino` after running `sh tools/umax_bench.sh` once, which
+copies the engine into it.
+
+### From the command line
+
+The IDE bundles `arduino-cli`; every command below works with it. Compile
+and upload the game:
+
+```bash
+arduino-cli compile -b arduino:avr:mega --upload -p COM8 .
+```
+
 ## Run this first
 
 ```bash
