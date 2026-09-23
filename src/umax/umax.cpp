@@ -32,6 +32,9 @@
 /***************************************************************************/
 #include "umax.h"
 #include "umax_keys.h"
+#ifdef UMAX_TRACE
+#include <stdio.h>                                   /* MEGA: root trace, native builds only */
+#endif
 
 #ifdef __AVR__
 #define UMAX_KEY(i) ((long) pgm_read_dword(&UMAX_KEYS[i]))
@@ -90,14 +93,14 @@ static int D(int q,int l,int e,int E,int z,int n)  /* recursive minimax search, 
  int j,r,m,v,d,h,i,F,G,V,P,C,s;
  long f=J,g=Z;                                 /* MEGA: keys are long      */
  signed char t,p,u,x,y,X,Y,H,B;
- struct _*a=A+((J+(long)k*E)&(U-1));           /* lookup pos. in hash table*/
+ struct _*a=A+((J+(long)k*(E+1))&(U-1));       /* MEGA: E+1 keeps the side in a small table*/
  if(umaxAbort)return l;                        /* MEGA: hard stop, unwind  */
  UMAX_STACK_PROBE();                           /* MEGA                     */
 
  q--;                                          /* adj. window: delay bonus */
  k^=24;                                        /* change sides             */
  d=a->D;m=a->V;X=a->X;Y=a->Y;                  /* resume at stored depth   */
- if(a->K-Z|z|                                  /* miss: other pos. or empty*/
+ if((a->K-(Z^((long)k<<24)))|z|                /* MEGA: key carries the mover*/
   !(m<=q|X&8&&m>=l|X&S))                       /*   or window incompatible */
   d=Y=0;                                       /* start iter. from scratch */
  X&=~M;                                        /* start at best-move hint  */
@@ -151,6 +154,9 @@ static int D(int q,int l,int e,int E,int z,int n)  /* recursive minimax search, 
        W(s>q&++C<d);v=s;
        if(z&&K-I&&v+I&&x==K&y==L)              /* move pending & in root:  */
        {Q=-e-i;O=F;                            /*   exit if legal & found  */
+#ifdef UMAX_TRACE
+        printf("    played %d->%d v=%d\n",x,y,v);
+#endif
         umaxDone=1;                            /* MEGA: lock done outside  */
         R+=i>>7;return l;                      /* captured non-P material  */
        }
@@ -171,9 +177,12 @@ static int D(int q,int l,int e,int E,int z,int n)  /* recursive minimax search, 
 C:if(m>I-M|m<M-I)d=98;                         /* mate holds to any depth  */
   m=m+I|P==I?m:0;                              /* best loses K: (stale)mate*/
   if(a->D<99&&!umaxAbort)                      /* protect game history     */
-   a->K=Z,a->V=m,a->D=d,                       /* always store in hash tab */
+   a->K=Z^((long)k<<24),a->V=m,a->D=d,         /* always store in hash tab */
    a->X=X|8*(m>q)|S*(m<l),a->Y=Y;              /* move, type (bound/exact),*/
   if(z&&!umaxAbort){umaxDepth=d-1;umaxScore=m;}/* MEGA: was the Kibitz line*/
+#ifdef UMAX_TRACE
+  if(z)printf("    root pass d=%d m=%d best %d->%d N=%lu K=%d L=%d done=%d\n",d,m,X,Y,N,K,L,umaxDone);
+#endif
  }                                             /*    encoded in X S,8 bits */
  k^=24;                                        /* change sides back        */
  return m+=m<e;                                /* delayed-loss bonus       */
@@ -192,9 +201,16 @@ static struct { long key; uint16_t idx; } locks[UMAX_LOCKS];
 static uint8_t lockHead, lockCount;
 
 static void umax_lock_current() {
-    const uint16_t idx = (uint16_t) ((J + (long) k * O) & (U - 1));
+    /* The same slot and key D() will form for this position: it takes the
+     * slot from k before it flips sides, and the key from k after. In a table
+     * this small the side has to be in the key, or a position and its mirror
+     * with the other side to move are one entry - and the null-move child of
+     * the root then reads the root's own lock. That was a game lost to "no
+     * move" with six escapes on the board. */
+    const uint16_t idx = (uint16_t) ((J + (long) k * (O + 1)) & (U - 1));
+    const long key = Z ^ ((long) (k ^ 24) << 24);
     struct _* a = A + idx;
-    if (a->D == 99 && a->K == Z) { a->V = I - 1; return; }
+    if (a->D == 99 && a->K == key) { a->V = I - 1; return; }
     if (lockCount == UMAX_LOCKS) {
         struct _* old = A + locks[lockHead].idx;
         if (old->D == 99 && old->K == locks[lockHead].key) old->D = 0;
@@ -202,9 +218,9 @@ static void umax_lock_current() {
         lockCount++;
     }
     locks[lockHead].idx = idx;
-    locks[lockHead].key = Z;
+    locks[lockHead].key = key;
     lockHead = (uint8_t) ((lockHead + 1) % UMAX_LOCKS);
-    a->K = Z; a->V = 0; a->D = 99; a->X = (char) (8 | S); a->Y = 0;
+    a->K = key; a->V = 0; a->D = 99; a->X = (char) (8 | S); a->Y = 0;
 }
 
 /* MEGA: the API ------------------------------------------------------------ */

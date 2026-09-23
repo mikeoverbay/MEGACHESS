@@ -222,6 +222,64 @@ static void commit(move_t& mv, move_t& wmove, move_t& bmove, bool whitesTurn) {
     }
 }
 
+// Does the side to move have any legal move? MicroChess only ever lists
+// pseudo-legal moves and only calls mate for the engine's own side, so this
+// tries each candidate for real and takes it straight back. Used to call
+// mate or stalemate on a human, and to keep the engine's fallback legal.
+// About 30 trial moves at a few ms each; the mask is cleared afterwards.
+static bool find_legal_move(index_t& from, index_t& to) {
+    const bool whitesTurn = (game.turn == White);
+    move_t wmove = { -1, -1, MIN_VALUE };
+    move_t bmove = { -1, -1, MAX_VALUE };
+    // A trial is one make_move, no search behind it.
+    const uint8_t mp = game.options.maxply, mq = game.options.max_quiescent_ply,
+                  mm = game.options.max_max_ply;
+    game.options.maxply = 0; game.options.max_quiescent_ply = 0; game.options.max_max_ply = 0;
+    bool found = false;
+    for (index_t sq = 0; sq < 64 && !found; sq++) {
+        const Piece p = board.get(sq);
+        if (isEmpty(p) || getSide(p) != game.turn) continue;
+        build_legal_mask(sq);
+        for (index_t t = 0; t < 64; t++) {
+            if (!(getbit(legal_mask, t))) continue;
+            push_undo();
+            game.stats.start_move_stats();
+            game.stats.move_stats.depth = 0;
+            reset_turn_flags();
+            game.alpha = wmove.value;
+            game.beta  = bmove.value;
+            game.supplied      = move_t(sq, t, 0L);
+            game.user_supplied = True;
+            game.supply_valid  = True;
+            move_t mv = game.supplied;
+            commit(mv, wmove, bmove, whitesTurn);
+            const bool selfCheck = whitesTurn ? game.white_king_in_check
+                                              : game.black_king_in_check;
+            pop_undo();
+            if (!selfCheck) { from = sq; to = t; found = true; break; }
+        }
+    }
+    game.options.maxply = mp; game.options.max_quiescent_ply = mq; game.options.max_max_ply = mm;
+    memset(legal_mask, 0, sizeof(legal_mask));
+    return found;
+}
+
+// After a move has been played: if the side now to move has no legal move
+// the game is over. This is the only way a human is ever mated here.
+static void settle_side_to_move() {
+    if (game.state != PLAYING) return;
+    index_t f, t;
+    if (!find_legal_move(f, t)) call_no_moves();
+}
+
+// No legal move: mate if in check, else stalemate. Sets game.state.
+static void call_no_moves() {
+    const bool whitesTurn = (game.turn == White);
+    const bool inCheck = whitesTurn ? game.white_king_in_check : game.black_king_in_check;
+    if (inCheck) game.state = whitesTurn ? BLACK_CHECKMATE : WHITE_CHECKMATE;
+    else         game.state = STALEMATE;
+}
+
 static MoveResult apply_move(index_t from, index_t to) {
     const bool  whitesTurn = (game.turn == White);
     const Piece moved      = board.get(from);
@@ -373,7 +431,12 @@ static MoveResult ai_move() {
             build_legal_mask(uf);
             const bool legal = (getbit(legal_mask, ut)) != 0;
             memset(legal_mask, 0, sizeof(legal_mask));
-            if (!legal) Serial.println(F("uMAX: move not in MicroChess list, its search decides"));
+            if (!legal) {
+                char a[3], c[3];
+                square_name(uf, a); square_name(ut, c);
+                Serial.print(F("uMAX: ")); Serial.print(a); Serial.print('-'); Serial.print(c);
+                Serial.println(F(" not in MicroChess list, its search decides"));
+            }
             if (legal) {
                 const Piece moved   = board.get(uf);
                 const bool  capture = !isEmpty(board.get(ut));
@@ -414,16 +477,44 @@ static MoveResult ai_move() {
     game.stats.stop_move_stats();
 
     move_t mv = game.supply_valid ? game.supplied : (whitesTurn ? wmove : bmove);
-    if (mv.from < 0 || mv.to < 0) { pop_undo(); return MV_NONE; }
+    if (mv.from >= 0 && mv.to >= 0) {
+        const Piece moved   = board.get(mv.from);
+        const bool  capture = !isEmpty(board.get(mv.to));
+        commit(mv, wmove, bmove, whitesTurn);
+        const bool selfCheck = whitesTurn ? game.white_king_in_check
+                                          : game.black_king_in_check;
+        if (!selfCheck) {
+            last_from = mv.from;
+            last_to   = mv.to;
+            sd_pgn_move(mv.from, mv.to, moved, capture);
+            return MV_OK;
+        }
+        pop_undo();                          // its move left its own king attacked
+        push_undo();
+    }
 
-    const Piece moved   = board.get(mv.from);
-    const bool  capture = !isEmpty(board.get(mv.to));
+    // The search came up empty, or with a move that hangs its king. Any legal
+    // move beats that, and none at all is mate or stalemate - called properly,
+    // not by the engine losing its own king.
+    Serial.println(F("engine: search gave no legal move, trying each"));
+    index_t f, t;
+    if (!find_legal_move(f, t)) { pop_undo(); call_no_moves(); return MV_NONE; }
 
-    commit(mv, wmove, bmove, whitesTurn);
-
-    last_from = mv.from;
-    last_to   = mv.to;
-    sd_pgn_move(mv.from, mv.to, moved, capture);
+    game.stats.start_move_stats();
+    game.stats.move_stats.depth = 0;
+    reset_turn_flags();
+    game.alpha = wmove.value;
+    game.beta  = bmove.value;
+    game.supplied      = move_t(f, t, 0L);
+    game.user_supplied = True;
+    game.supply_valid  = True;
+    move_t any = game.supplied;
+    const Piece moved   = board.get(any.from);
+    const bool  capture = !isEmpty(board.get(any.to));
+    commit(any, wmove, bmove, whitesTurn);
+    last_from = any.from;
+    last_to   = any.to;
+    sd_pgn_move(any.from, any.to, moved, capture);
     return MV_OK;
 }
 
@@ -688,6 +779,7 @@ static void handle_game_touch(int16_t x, int16_t y) {
     if (r == MV_OK) {
         redraw_after_move(oldFrom, oldTo);
         sd_save_game();
+        settle_side_to_move();               // mate or stalemate on the other side
         if (!check_game_over() && game.white_king_in_check)
             ui_set_status(F("CHECK"), C_CHECK);
         else if (game.state == PLAYING && game.black_king_in_check)
@@ -824,11 +916,11 @@ void loop() {
         think_sq = -1;
 
         if (r == MV_NONE) {
-            // No move to make and not already flagged - treat as stalemate.
-            if (game.state == PLAYING) game.state = STALEMATE;
+            if (game.state == PLAYING) call_no_moves();   // mate or stalemate, whichever it is
         } else {
             redraw_after_move(oldFrom, oldTo);
             sd_save_game();
+            settle_side_to_move();       // the other side may now have no move at all
         }
 
         if (!check_game_over()) {
