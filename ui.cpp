@@ -157,7 +157,7 @@ void ui_draw_square(index_t sq) {
     const uint16_t tint = mix565(light ? cur.darkSq : cur.lightSq, bg, 11);
     if (sr == 7) {
         char f[2] = { (char) ('a' + c), '\0' };
-        text_at(x + SQ - 7, y + SQ - 9, 1, tint, f);
+        text_at(x + SQ - 7, y + SQ - 15, 1, tint, f);   // up off the bottom edge: the case lip covers it
     }
     if (sc == 0) {
         char n[2] = { (char) ('8' - r), '\0' };
